@@ -1,0 +1,40 @@
+services:
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.18
+    command:
+      - redpanda
+      - start
+      - --mode=dev-container
+      - --smp=1
+      - --memory=1G
+      - --kafka-addr=internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr=internal://redpanda:9092,external://localhost:19092
+    ports:
+      - "19092:19092"
+    volumes:
+      - redpanda-data:/var/lib/redpanda/data
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -E 'Healthy:.+true' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  spark:
+    build: .
+    depends_on:
+      redpanda:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      LAKE_ROOT: /workspace/lake
+      SPARK_MASTER: local[2]
+    volumes:
+      # Source is mounted so edits apply without a rebuild; lake/ lands on the host.
+      - ./src:/workspace/src
+      - ./lake:/workspace/lake
+      - ivy-cache:/root/.ivy2.5.2
+    mem_limit: 3g
+
+volumes:
+  redpanda-data:
+  ivy-cache:

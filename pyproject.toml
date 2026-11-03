@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "plant-telemetry-lakehouse"
+version = "0.1.0"
+description = "Kafka to Delta streaming lakehouse for synthetic plant telemetry and work-order CDC."
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Navya Sindhu" }]
+requires-python = ">=3.11"
+dependencies = [
+    "pyspark==4.0.1",
+    "delta-spark==4.0.1",
+    "kafka-python==3.0.12",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+    "ruff==0.17.3",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/plant_telemetry"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+markers = [
+    "delta: needs the Delta Lake JVM package (resolved from Maven on first use)",
+]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "RUF"]
